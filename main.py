@@ -11,6 +11,7 @@ from pptx import Presentation
 import threading
 import re
 import numpy as np
+import csv
 
 def thread_it(func, *args):
     t = threading.Thread(target=func, args=args)
@@ -27,11 +28,18 @@ def MSE(img1, img2):
         summed = np.sum(squared_diff)
         num_pix = img1.shape[0]*img1.shape[1]
         err = summed/num_pix
+        # print(err)
+        # with open('data.csv', 'w', newline='') as file:
+        #     writer = csv.writer(file)
+            
+        #     writer.writerow(list(err.tolist()))
+        print(err)
         return err
 
 
 def select_file():
-    filename = filedialog.askopenfilename(initialdir = "/", title = "Select a File",filetypes = (("Video files", "*.mp4;*.mkv;*.avi;*.wmv;*.flv"), ("all files", "*.*"))
+
+    filename = filedialog.askopenfilename(initialdir = os.getcwd(), title = "Select a File",filetypes = (("Video files", "*.mp4;*.mkv;*.avi;*.wmv;*.flv"), ("all files", "*.*"))
 )
     # 在entry中显示文件路径
     file_path_entry.delete(0, END)
@@ -65,7 +73,7 @@ def video_to_ppt(filePath=None):
         grayA = cv2.cvtColor(imgPrev, cv2.COLOR_BGR2GRAY)
         grayB = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         # check threshold and delete images
-        if MSE(grayA,grayB) < 4:
+        if MSE(grayA,grayB) < 2:
             os.remove(filePath)
         #print(str(i) + ' MSE: ' + str(MSE(grayA,grayB)))
         imgPrev = img

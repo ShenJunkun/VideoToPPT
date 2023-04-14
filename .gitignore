@@ -3,3 +3,7 @@ study
 *.mp4
 
 *.pptx
+
+*.ipynb
+
+*.csv
