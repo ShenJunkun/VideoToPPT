@@ -12,7 +12,8 @@ import threading
 import re
 import numpy as np
 import csv
-
+# from skimage.measure import compare_ssim as ssim
+from skimage.metrics import structural_similarity as ssim
 def thread_it(func, *args):
     t = threading.Thread(target=func, args=args)
     t.setDaemon(True)
@@ -51,7 +52,18 @@ def download_video():
     yt.streams.filter().get_by_resolution('720p').download(filename="input.mp4")
     stext.insert(tk.END, "下载成功\n\n")
 
-
+def calculate_win_size(image):
+    height, width = image.shape
+    
+    min_dimension = min(height, width)
+    
+    # 设置 win_size 不超过最小尺寸的十分之一
+    win_size = min_dimension // 10 if min_dimension >= 10 else min_dimension
+    
+    # 确保 win_size 是奇数
+    win_size = win_size - 1 if win_size % 2 == 0 else win_size
+    
+    return win_size
 
 def video_to_ppt(filePath=None):
     stext.insert(tk.END, "正在生成图片，需要等待一段时间...\n")
@@ -66,15 +78,25 @@ def video_to_ppt(filePath=None):
     #TODO 处理图片，去掉部分相似的图片
 
     fileNum = len([x for x in os.listdir('output/')]) # read images
-    imgPrev = cv2.imread('output/out1.png') # first image
+    imgPrev = cv2.imread('output/out1.png', cv2.IMREAD_GRAYSCALE) # first image
     for i in range(fileNum-1):
         filePath = 'output/out'+ str(i+2) +'.png'
-        img = cv2.imread(filePath)
-        grayA = cv2.cvtColor(imgPrev, cv2.COLOR_BGR2GRAY)
-        grayB = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        img = cv2.imread(filePath, cv2.IMREAD_GRAYSCALE)
+        # grayA = cv2.cvtColor(imgPrev, cv2.COLOR_BGR2GRAY)
+        # grayB = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         # check threshold and delete images
-        if MSE(grayA,grayB) < 2:
+
+
+        # if MSE(grayA,grayB) < 2:
+        #     os.remove(filePath)
+        # height, width, _ = img.shape
+        # winSize = min(height, width) // 10
+        # winSize = winSize - 1 if winSize % 2 == 0 else winSize
+        win_size = calculate_win_size(img)
+        if ssim(imgPrev, img, multichannel=True, win_size=win_size)> 0.95:
             os.remove(filePath)
+
+
         #print(str(i) + ' MSE: ' + str(MSE(grayA,grayB)))
         imgPrev = img
 
@@ -95,6 +117,12 @@ def video_to_ppt(filePath=None):
     prs.save("result.pptx")
     os.rmdir('output')
     stext.insert(tk.END, 'PowerPoint制作完成\n\n')
+
+
+def video_to_ppt2():
+    
+    pass
+
 
 def end_to_end():
     download_video()
